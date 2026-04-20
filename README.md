@@ -55,7 +55,7 @@ dependencies = [
 ]
 ```
 
-The official MLP runtime profile for this package is **MySQL with mysqlclient**:
+The current MLP MySQL runtime profile is **MySQL with mysqlclient**:
 
 ```bash
 pip install "mlp-db[mysqlclient]"
@@ -67,10 +67,21 @@ That profile uses SQLAlchemy URLs with the `mysql+mysqldb` driver name:
 mysql+mysqldb://user:pass@host:3306/db?charset=utf8mb4
 ```
 
-The package code itself stays SQLAlchemy Core based and does not hard-code a driver. The following extras are available for consumers that intentionally need another SQLAlchemy dialect or driver, but they are not the official MLP integration profile and are not covered by the MySQL integration test suite:
+PostgreSQL is also a supported integration profile using `psycopg`:
 
 ```bash
 pip install "mlp-db[postgres]"
+```
+
+That profile uses:
+
+```text
+postgresql+psycopg://user:pass@host:5432/db
+```
+
+The package code itself stays SQLAlchemy Core based and does not hard-code a driver. The following extra is available for consumers that intentionally need the pure-Python MySQL driver, but it is not the MLP MySQL test profile:
+
+```bash
 pip install "mlp-db[pymysql]"
 ```
 
@@ -78,8 +89,8 @@ Examples of accepted SQLAlchemy DSNs:
 
 ```text
 mysql+mysqldb://user:pass@host:3306/db?charset=utf8mb4
-mysql+pymysql://user:pass@host:3306/db?charset=utf8mb4
 postgresql+psycopg://user:pass@host:5432/db
+mysql+pymysql://user:pass@host:3306/db?charset=utf8mb4
 ```
 
 ## Configuration
@@ -225,26 +236,41 @@ Run unit tests:
 python -m pytest
 ```
 
-MySQL integration tests run only when `MLP_DB_TEST_URL` is set. The test URL must use `mysqlclient`, which SQLAlchemy names `mysql+mysqldb`:
+MySQL integration tests run only when `MLP_DB_MYSQL_TEST_URL` or compatible local settings are present. The test URL must use `mysqlclient`, which SQLAlchemy names `mysql+mysqldb`:
 
 ```bash
-set MLP_DB_TEST_URL=mysql+mysqldb://user:pass@127.0.0.1:3306/test_db?charset=utf8mb4
+set MLP_DB_MYSQL_TEST_URL=mysql+mysqldb://user:pass@127.0.0.1:3306/test_db?charset=utf8mb4
 python -m pytest tests/test_mysql_integration.py
 ```
 
-For local agent runs, you can also create an unversioned `.env.test.local` file at the repo root. `tests/conftest.py` reads it and builds `MLP_DB_TEST_URL` automatically when the full URL is not already set:
+For PostgreSQL, use `psycopg`, which SQLAlchemy names `postgresql+psycopg`:
+
+```bash
+set MLP_DB_POSTGRES_TEST_URL=postgresql+psycopg://user:pass@127.0.0.1:5432/test_db
+python -m pytest tests/test_postgres_integration.py
+```
+
+For local agent runs, you can also create an unversioned `.env.test.local` file at the repo root. `tests/conftest.py` reads it and builds profile-specific test URLs automatically when the full URLs are not already set:
 
 ```text
-MLP_DB_TEST_DIALECT=mysql
-MLP_DB_TEST_DRIVER=mysqldb
-MLP_DB_TEST_HOST=127.0.0.1
-MLP_DB_TEST_PORT=3306
-MLP_DB_TEST_NAME=mlp_db_test
-MLP_DB_TEST_USERNAME=mlp_db_test
-MLP_DB_TEST_PASS=secret
-MLP_DB_TEST_CHARSET=utf8mb4
+MLP_DB_MYSQL_TEST_DIALECT=mysql
+MLP_DB_MYSQL_TEST_DRIVER=mysqldb
+MLP_DB_MYSQL_TEST_HOST=127.0.0.1
+MLP_DB_MYSQL_TEST_PORT=3306
+MLP_DB_MYSQL_TEST_NAME=mlp_db_test
+MLP_DB_MYSQL_TEST_USERNAME=mlp_db_test
+MLP_DB_MYSQL_TEST_PASS=secret
+MLP_DB_MYSQL_TEST_CHARSET=utf8mb4
+
+MLP_DB_POSTGRES_TEST_DIALECT=postgresql
+MLP_DB_POSTGRES_TEST_DRIVER=psycopg
+MLP_DB_POSTGRES_TEST_HOST=127.0.0.1
+MLP_DB_POSTGRES_TEST_PORT=5432
+MLP_DB_POSTGRES_TEST_NAME=mlp_db_test
+MLP_DB_POSTGRES_TEST_USERNAME=mlp_db_test
+MLP_DB_POSTGRES_TEST_PASS=secret
 ```
 
 `.env.test.local` is ignored by git. A safe template is available in `.env.test.example`.
 
-The integration tests cover `SELECT 1`, helpers, DML with parameters, commit, rollback, `READ COMMITTED`, SQL error translation, unique violation translation, pool logging, slow query logging, and dedicated connections.
+The MySQL and PostgreSQL integration tests cover `SELECT 1`, helpers, DML with parameters, commit, rollback, `READ COMMITTED`, SQL error translation, unique violation translation, pool logging, slow query logging, and dedicated connections.

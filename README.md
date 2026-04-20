@@ -138,7 +138,7 @@ DB_CHARSET
 
 ## Query Helpers
 
-The convenience methods keep common code short but still return SQLAlchemy Core objects:
+The convenience methods keep common code short while still using SQLAlchemy Core. Use `execute()` for DDL/DML or statements where you do not need to consume rows after the call returns. For queries that return rows, prefer `fetch_one()` or `fetch_all()` because they consume the result while the connection is still open.
 
 ```python
 db.execute("INSERT INTO demo (name) VALUES (:name)", {"name": "abc"})
@@ -182,6 +182,8 @@ Successful queries are not logged by default. Slow queries are logged when `dura
 
 Parameters are not logged by default. If `log_parameters=True`, values are sanitized and truncated before being added to the logging context. Statements are truncated using `max_statement_length`.
 
+Instrumentation is scoped to the SQLAlchemy `Engine`. If multiple `MLPDatabase` wrappers share the same `Engine`, they share instrumentation state; constructing a later wrapper updates the logger and logging config used by that engine.
+
 ## Exceptions
 
 Public `MLPDatabase` methods translate SQLAlchemy exceptions to `mlp.db` exceptions:
@@ -218,11 +220,27 @@ The original SQLAlchemy exception is preserved as the cause with `raise translat
 
 `open_dedicated_connection()` opens a connection from an internal `NullPool` engine using the same database URL. This is meant for future long-lived process locks in `mlp_tasks`.
 
+`mlp-db` only provides the dedicated connection. The lock primitive itself depends on the database engine.
+
+MySQL example:
+
 ```python
 lock_conn = db.open_dedicated_connection()
 try:
     lock_conn.execute(text("SELECT GET_LOCK(:name, :timeout)"), {"name": "job", "timeout": 10})
 finally:
+    lock_conn.close()
+```
+
+PostgreSQL example:
+
+```python
+lock_conn = db.open_dedicated_connection()
+try:
+    lock_conn.execute(text("SELECT pg_advisory_lock(:key)"), {"key": 12345})
+    # Or use pg_try_advisory_lock(:key) if the caller should decide what to do when the lock is busy.
+finally:
+    lock_conn.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": 12345})
     lock_conn.close()
 ```
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
@@ -38,24 +39,25 @@ def test_mysql_select_and_fetch_helpers() -> None:
 
 def test_mysql_dml_transactions_and_errors() -> None:
     db = build_db()
-    db.execute("DROP TABLE IF EXISTS mlp_db_test_demo")
-    db.execute("CREATE TABLE mlp_db_test_demo (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(32) NOT NULL UNIQUE)")
+    table_name = f"mlp_db_test_demo_{uuid4().hex}"
+    db.execute(f"DROP TABLE IF EXISTS {table_name}")
+    db.execute(f"CREATE TABLE {table_name} (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(32) NOT NULL UNIQUE)")
     try:
         with db.begin(isolation_level="READ COMMITTED") as conn:
-            conn.execute(text("INSERT INTO mlp_db_test_demo (code) VALUES (:code)"), {"code": "A"})
+            conn.execute(text(f"INSERT INTO {table_name} (code) VALUES (:code)"), {"code": "A"})
 
         with pytest.raises(RuntimeError), db.begin(isolation_level="READ COMMITTED") as conn:
-            conn.execute(text("INSERT INTO mlp_db_test_demo (code) VALUES (:code)"), {"code": "B"})
+            conn.execute(text(f"INSERT INTO {table_name} (code) VALUES (:code)"), {"code": "B"})
             raise RuntimeError("rollback")
 
-        assert [row["code"] for row in db.fetch_all("SELECT code FROM mlp_db_test_demo ORDER BY id")] == ["A"]
+        assert [row["code"] for row in db.fetch_all(f"SELECT code FROM {table_name} ORDER BY id")] == ["A"]
 
         with pytest.raises(MLPIntegrityError):
-            db.execute("INSERT INTO mlp_db_test_demo (code) VALUES (:code)", {"code": "A"})
+            db.execute(f"INSERT INTO {table_name} (code) VALUES (:code)", {"code": "A"})
         with pytest.raises(MLPQueryError):
             db.fetch_one("SELECT * FROM mlp_db_missing_table")
     finally:
-        db.execute("DROP TABLE IF EXISTS mlp_db_test_demo")
+        db.execute(f"DROP TABLE IF EXISTS {table_name}")
 
 
 def test_mysql_logging_and_dedicated_connection() -> None:

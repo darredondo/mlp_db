@@ -27,6 +27,8 @@ class MLPDatabase:
         logger: ComponentLoggerInterface | None = None,
         logging_config: LoggingConfig | None = None,
     ) -> None:
+        if not isinstance(engine, Engine):
+            raise TypeError("engine must be a SQLAlchemy Engine.")
         if logger is not None and not isinstance(logger, ComponentLoggerInterface):
             raise TypeError("logger must implement ComponentLoggerInterface.")
         if logging_config is not None and not isinstance(logging_config, LoggingConfig):

@@ -17,7 +17,7 @@ from mlp.logger import ConsoleLogger
 logger = ConsoleLogger(minimum_level="DEBUG")
 
 db = MLPDatabase.from_config(
-    DatabaseConfig(url="mysql+pymysql://user:pass@localhost:3306/app?charset=utf8mb4"),
+    DatabaseConfig(url="mysql+mysqldb://user:pass@localhost:3306/app?charset=utf8mb4"),
     logger=logger,
     logging_config=LoggingConfig(
         log_successful_queries=False,
@@ -55,19 +55,19 @@ dependencies = [
 ]
 ```
 
-Database drivers are optional extras so applications can choose their own:
+Database drivers are optional extras so applications can choose their own. For MLP MySQL projects, use `mysqlclient`:
 
 ```bash
-pip install "mlp-db[pymysql]"
 pip install "mlp-db[mysqlclient]"
 pip install "mlp-db[postgres]"
+pip install "mlp-db[pymysql]"
 ```
 
 Supported URLs are normal SQLAlchemy DSNs, for example:
 
 ```text
-mysql+pymysql://user:pass@host:3306/db?charset=utf8mb4
 mysql+mysqldb://user:pass@host:3306/db?charset=utf8mb4
+mysql+pymysql://user:pass@host:3306/db?charset=utf8mb4
 postgresql+psycopg://user:pass@host:5432/db
 ```
 
@@ -81,7 +81,7 @@ Use frozen dataclasses:
 from mlp.db import DatabaseConfig, LoggingConfig, PoolConfig
 
 config = DatabaseConfig(
-    url="mysql+pymysql://user:pass@localhost:3306/app?charset=utf8mb4",
+    url="mysql+mysqldb://user:pass@localhost:3306/app?charset=utf8mb4",
     echo=False,
     pool_pre_ping=True,
     pool_recycle_seconds=3600,
@@ -216,12 +216,11 @@ Run unit tests:
 python -m pytest
 ```
 
-MySQL integration tests run only when `MLP_DB_TEST_URL` is set:
+MySQL integration tests run only when `MLP_DB_TEST_URL` is set. The test URL must use `mysqlclient`, which SQLAlchemy names `mysql+mysqldb`:
 
 ```bash
-set MLP_DB_TEST_URL=mysql+pymysql://user:pass@127.0.0.1:3306/test_db?charset=utf8mb4
+set MLP_DB_TEST_URL=mysql+mysqldb://user:pass@127.0.0.1:3306/test_db?charset=utf8mb4
 python -m pytest tests/test_mysql_integration.py
 ```
 
 The integration tests cover `SELECT 1`, helpers, DML with parameters, commit, rollback, `READ COMMITTED`, SQL error translation, unique violation translation, pool logging, slow query logging, and dedicated connections.
-

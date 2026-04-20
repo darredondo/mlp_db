@@ -15,27 +15,27 @@ def test_database_config_validates_url() -> None:
 
 def test_database_config_rejects_ambiguous_manual_bool() -> None:
     with pytest.raises(MLPConfigurationError):
-        DatabaseConfig(url="sqlite:///example.db", echo="false")  # type: ignore[arg-type]
+        DatabaseConfig(url="mysql+mysqldb://u:p@localhost:3306/app?charset=utf8mb4", echo="false")  # type: ignore[arg-type]
 
 
 def test_database_config_from_env_prefers_db_url() -> None:
     config = DatabaseConfig.from_env(
         environ={
-            "DB_URL": "mysql+pymysql://u:p@localhost:3306/app?charset=utf8mb4",
+            "DB_URL": "mysql+mysqldb://u:p@localhost:3306/app?charset=utf8mb4",
             "DB_DIALECT": "postgresql",
             "DB_HOST": "ignored",
             "DB_NAME": "ignored",
         }
     )
 
-    assert config.url == "mysql+pymysql://u:p@localhost:3306/app?charset=utf8mb4"
+    assert config.url == "mysql+mysqldb://u:p@localhost:3306/app?charset=utf8mb4"
 
 
 def test_database_config_from_env_builds_sqlalchemy_url() -> None:
     config = DatabaseConfig.from_env(
         environ={
             "DB_DIALECT": "mysql",
-            "DB_DRIVER": "pymysql",
+            "DB_DRIVER": "mysqldb",
             "DB_HOST": "127.0.0.1",
             "DB_PORT": "3306",
             "DB_NAME": "app",
@@ -45,7 +45,7 @@ def test_database_config_from_env_builds_sqlalchemy_url() -> None:
         }
     )
 
-    assert config.url == "mysql+pymysql://user:p+a+s+s@127.0.0.1:3306/app?charset=utf8mb4"
+    assert config.url == "mysql+mysqldb://user:p+a+s+s@127.0.0.1:3306/app?charset=utf8mb4"
 
 
 def test_pool_and_logging_config_validation() -> None:

@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlp-db"
+version = "0.1.0"
+description = "SQLAlchemy Core database utilities for MLP Python components."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "SQLAlchemy>=2.0,<3.0",
+    "mlp-logging @ git+https://github.com/darredondo/mlp_logger.git@v0.2.0",
+]
+
+[project.optional-dependencies]
+pymysql = ["PyMySQL>=1.1,<2.0"]
+mysqlclient = ["mysqlclient>=2.2,<3.0"]
+postgres = ["psycopg[binary]>=3.1,<4.0"]
+dev = [
+    "pytest>=8.0,<10.0",
+    "ruff>=0.8,<1.0",
+    "pyright>=1.1,<2.0",
+    "build>=1.2,<2.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mlp*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"mlp.db" = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["mlp"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+venvPath = "."
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportAttributeAccessIssue = false

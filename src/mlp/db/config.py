@@ -44,13 +44,13 @@ class DatabaseConfig:
             )
 
         dialect = _required_env(env, f"{prefix}DIALECT")
-        driver = env.get(f"{prefix}DRIVER")
+        driver = _optional_env(env, f"{prefix}DRIVER")
         host = _required_env(env, f"{prefix}HOST")
         database = _required_env(env, f"{prefix}NAME")
-        username = env.get(f"{prefix}USERNAME")
-        password = env.get(f"{prefix}PASS")
+        username = _optional_env(env, f"{prefix}USERNAME")
+        password = _optional_env(env, f"{prefix}PASS")
         port = _parse_optional_port(env.get(f"{prefix}PORT"), name=f"{prefix}PORT")
-        charset = env.get(f"{prefix}CHARSET")
+        charset = _optional_env(env, f"{prefix}CHARSET")
 
         driver_part = f"+{driver}" if driver else ""
         auth = ""
@@ -102,9 +102,20 @@ class LoggingConfig:
 
 def _required_env(env: Mapping[str, str], name: str) -> str:
     value = env.get(name)
-    if value is None or value == "":
+    if value is None:
         raise MLPConfigurationError(f"{name} is required when DB_URL is not set")
-    return value
+    stripped = value.strip()
+    if stripped == "":
+        raise MLPConfigurationError(f"{name} is required when DB_URL is not set")
+    return stripped
+
+
+def _optional_env(env: Mapping[str, str], name: str) -> str | None:
+    value = env.get(name)
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None
 
 
 def _parse_bool(value: str | None, *, default: bool) -> bool:

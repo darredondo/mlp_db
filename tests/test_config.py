@@ -39,18 +39,35 @@ def test_database_config_from_env_treats_blank_db_url_as_missing() -> None:
 def test_database_config_from_env_builds_sqlalchemy_url() -> None:
     config = DatabaseConfig.from_env(
         environ={
-            "DB_DIALECT": "mysql",
-            "DB_DRIVER": "mysqldb",
-            "DB_HOST": "127.0.0.1",
+            "DB_DIALECT": " mysql ",
+            "DB_DRIVER": " mysqldb ",
+            "DB_HOST": " 127.0.0.1 ",
             "DB_PORT": "3306",
-            "DB_NAME": "app",
-            "DB_USERNAME": "user",
-            "DB_PASS": "p a s s",
-            "DB_CHARSET": "utf8mb4",
+            "DB_NAME": " app ",
+            "DB_USERNAME": " user ",
+            "DB_PASS": " p a s s ",
+            "DB_CHARSET": " utf8mb4 ",
         }
     )
 
     assert config.url == "mysql+mysqldb://user:p+a+s+s@127.0.0.1:3306/app?charset=utf8mb4"
+
+
+def test_database_config_from_env_ignores_blank_optional_values() -> None:
+    config = DatabaseConfig.from_env(
+        environ={
+            "DB_DIALECT": "mysql",
+            "DB_DRIVER": "   ",
+            "DB_HOST": "127.0.0.1",
+            "DB_PORT": "3306",
+            "DB_NAME": "app",
+            "DB_USERNAME": "   ",
+            "DB_PASS": "   ",
+            "DB_CHARSET": "   ",
+        }
+    )
+
+    assert config.url == "mysql://127.0.0.1:3306/app"
 
 
 def test_database_config_from_env_validates_port() -> None:

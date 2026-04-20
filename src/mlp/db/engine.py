@@ -46,6 +46,10 @@ class MLPDatabase:
         logging_config: LoggingConfig | None = None,
         logger: ComponentLoggerInterface | None = None,
     ) -> MLPDatabase:
+        if not isinstance(config, DatabaseConfig):
+            raise TypeError("config must be DatabaseConfig.")
+        if pool_config is not None and not isinstance(pool_config, PoolConfig):
+            raise TypeError("pool_config must be PoolConfig or None.")
         pool = pool_config or PoolConfig()
         engine_kwargs: dict[str, Any] = {
             "echo": config.echo,

@@ -9,7 +9,7 @@ from sqlalchemy.engine import CursorResult, RowMapping
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.pool import NullPool
 
-from mlp.logger import ComponentLoggerInterface
+from mlp.logger import ComponentLoggerInterface, build_default_logger
 
 from .config import DatabaseConfig, LoggingConfig, PoolConfig
 from .exceptions import MLPTransactionError, translate_sqlalchemy_error
@@ -34,10 +34,10 @@ class MLPDatabase:
         if logging_config is not None and not isinstance(logging_config, LoggingConfig):
             raise TypeError("logging_config must be LoggingConfig or None.")
         self._engine = engine
-        self._logger = logger
-        self._logging_config = logging_config or LoggingConfig()
+        self._logger = logger or build_default_logger()
+        self._logging_config = logging_config or LoggingConfig.from_env()
         self._dedicated_engine: Engine | None = None
-        instrument_engine(self._engine, logger=logger, config=self._logging_config)
+        instrument_engine(self._engine, logger=self._logger, config=self._logging_config)
 
     @classmethod
     def from_config(

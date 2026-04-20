@@ -99,6 +99,17 @@ class LoggingConfig:
         if self.slow_query_threshold_ms is not None:
             _require_positive_number("slow_query_threshold_ms", self.slow_query_threshold_ms)
 
+    @classmethod
+    def from_env(cls, prefix: str = "MLP_DB_LOG_", environ: Mapping[str, str] | None = None) -> LoggingConfig:
+        env = os.environ if environ is None else environ
+        return cls(
+            log_successful_queries=_parse_bool(env.get(f"{prefix}SUCCESSFUL_QUERIES"), default=False),
+            slow_query_threshold_ms=_parse_optional_float(env.get(f"{prefix}SLOW_QUERY_THRESHOLD_MS"), default=500.0),
+            log_pool_events=_parse_bool(env.get(f"{prefix}POOL_EVENTS"), default=True),
+            log_parameters=_parse_bool(env.get(f"{prefix}PARAMETERS"), default=False),
+            max_statement_length=_parse_optional_int(env.get(f"{prefix}MAX_STATEMENT_LENGTH")) or 2000,
+        )
+
 
 def _required_env(env: Mapping[str, str], name: str) -> str:
     value = env.get(name)
@@ -136,6 +147,18 @@ def _parse_optional_int(value: str | None) -> int | None:
         return int(value)
     except ValueError as exc:
         raise MLPConfigurationError(f"invalid integer environment value: {value!r}") from exc
+
+
+def _parse_optional_float(value: str | None, *, default: float | None) -> float | None:
+    if value is None or value == "":
+        return default
+    normalized = value.strip().lower()
+    if normalized in {"none", "null", "off"}:
+        return None
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise MLPConfigurationError(f"invalid float environment value: {value!r}") from exc
 
 
 def _parse_optional_port(value: str | None, *, name: str) -> int | None:

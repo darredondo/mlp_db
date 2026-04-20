@@ -1,18 +1,84 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote_plus, urlencode
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
 LOGGER_SRC = ROOT.parent / "mlp_logger" / "src"
+LOCAL_TEST_ENV = ROOT / ".env.test.local"
 
 for path in (SRC, LOGGER_SRC):
     if path.exists() and str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
 from mlp.logger import ComponentLoggerInterface  # noqa: E402
+
+
+def load_local_test_env(path: Path = LOCAL_TEST_ENV) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key:
+            continue
+        os.environ.setdefault(key, _unquote_env_value(value.strip()))
+
+
+def resolve_mysql_test_url() -> str | None:
+    load_local_test_env()
+    explicit_url = os.environ.get("MLP_DB_TEST_URL")
+    if explicit_url and explicit_url.strip():
+        return explicit_url.strip()
+
+    dialect = _get_test_env("MLP_DB_TEST_DIALECT")
+    driver = _get_test_env("MLP_DB_TEST_DRIVER")
+    host = _get_test_env("MLP_DB_TEST_HOST")
+    database = _get_test_env("MLP_DB_TEST_NAME")
+    username = _get_test_env("MLP_DB_TEST_USERNAME")
+    password = _get_test_env("MLP_DB_TEST_PASS")
+    port = _get_test_env("MLP_DB_TEST_PORT")
+    charset = _get_test_env("MLP_DB_TEST_CHARSET")
+
+    if not dialect or not host or not database:
+        return None
+
+    driver_part = f"+{driver}" if driver else ""
+    auth = ""
+    if username:
+        auth = quote_plus(username)
+        if password:
+            auth += f":{quote_plus(password)}"
+        auth += "@"
+    port_part = f":{port}" if port else ""
+    query = f"?{urlencode({'charset': charset})}" if charset else ""
+    url = f"{dialect}{driver_part}://{auth}{host}{port_part}/{quote_plus(database)}{query}"
+    os.environ["MLP_DB_TEST_URL"] = url
+    return url
+
+
+def _get_test_env(name: str) -> str | None:
+    value = os.environ.get(name)
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def _unquote_env_value(value: str) -> str:
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    return value
+
+
+MYSQL_TEST_URL = resolve_mysql_test_url()
 
 
 class MemoryLogger(ComponentLoggerInterface):

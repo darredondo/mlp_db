@@ -232,4 +232,19 @@ set MLP_DB_TEST_URL=mysql+mysqldb://user:pass@127.0.0.1:3306/test_db?charset=utf
 python -m pytest tests/test_mysql_integration.py
 ```
 
+For local agent runs, you can also create an unversioned `.env.test.local` file at the repo root. `tests/conftest.py` reads it and builds `MLP_DB_TEST_URL` automatically when the full URL is not already set:
+
+```text
+MLP_DB_TEST_DIALECT=mysql
+MLP_DB_TEST_DRIVER=mysqldb
+MLP_DB_TEST_HOST=127.0.0.1
+MLP_DB_TEST_PORT=3306
+MLP_DB_TEST_NAME=mlp_db_test
+MLP_DB_TEST_USERNAME=mlp_db_test
+MLP_DB_TEST_PASS=secret
+MLP_DB_TEST_CHARSET=utf8mb4
+```
+
+`.env.test.local` is ignored by git. A safe template is available in `.env.test.example`.
+
 The integration tests cover `SELECT 1`, helpers, DML with parameters, commit, rollback, `READ COMMITTED`, SQL error translation, unique violation translation, pool logging, slow query logging, and dedicated connections.

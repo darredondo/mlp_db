@@ -9,3 +9,7 @@ dist/
 .venv/
 venv/
 .env
+.env.*
+!.env.example
+!.env.test.example
+test_db.json

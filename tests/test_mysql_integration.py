@@ -6,10 +6,10 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 
-from conftest import MemoryLogger
+from conftest import MYSQL_TEST_URL, MemoryLogger
 from mlp.db import DatabaseConfig, LoggingConfig, MLPDatabase, MLPIntegrityError, MLPQueryError, PoolConfig
 
-pytestmark = pytest.mark.skipif(not os.environ.get("MLP_DB_TEST_URL"), reason="MLP_DB_TEST_URL is not set")
+pytestmark = pytest.mark.skipif(not MYSQL_TEST_URL, reason="MLP_DB_TEST_URL or .env.test.local is not configured")
 
 
 def build_db(*, logger: MemoryLogger | None = None, logging_config: LoggingConfig | None = None) -> MLPDatabase:

@@ -55,23 +55,32 @@ dependencies = [
 ]
 ```
 
-Database drivers are optional extras so applications can choose their own. For MLP MySQL projects, use `mysqlclient`:
+The official MLP runtime profile for this package is **MySQL with mysqlclient**:
 
 ```bash
 pip install "mlp-db[mysqlclient]"
+```
+
+That profile uses SQLAlchemy URLs with the `mysql+mysqldb` driver name:
+
+```text
+mysql+mysqldb://user:pass@host:3306/db?charset=utf8mb4
+```
+
+The package code itself stays SQLAlchemy Core based and does not hard-code a driver. The following extras are available for consumers that intentionally need another SQLAlchemy dialect or driver, but they are not the official MLP integration profile and are not covered by the MySQL integration test suite:
+
+```bash
 pip install "mlp-db[postgres]"
 pip install "mlp-db[pymysql]"
 ```
 
-Supported URLs are normal SQLAlchemy DSNs, for example:
+Examples of accepted SQLAlchemy DSNs:
 
 ```text
 mysql+mysqldb://user:pass@host:3306/db?charset=utf8mb4
 mysql+pymysql://user:pass@host:3306/db?charset=utf8mb4
 postgresql+psycopg://user:pass@host:5432/db
 ```
-
-`mlp-db` does not force one MySQL driver in code.
 
 ## Configuration
 

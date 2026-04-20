@@ -27,6 +27,10 @@ class MLPDatabase:
         logger: ComponentLoggerInterface | None = None,
         logging_config: LoggingConfig | None = None,
     ) -> None:
+        if logger is not None and not isinstance(logger, ComponentLoggerInterface):
+            raise TypeError("logger must implement ComponentLoggerInterface.")
+        if logging_config is not None and not isinstance(logging_config, LoggingConfig):
+            raise TypeError("logging_config must be LoggingConfig or None.")
         self._engine = engine
         self._logger = logger
         self._logging_config = logging_config or LoggingConfig()

@@ -33,7 +33,8 @@ class DatabaseConfig:
     @classmethod
     def from_env(cls, prefix: str = "DB_", environ: Mapping[str, str] | None = None) -> DatabaseConfig:
         env = os.environ if environ is None else environ
-        url = env.get(f"{prefix}URL")
+        raw_url = env.get(f"{prefix}URL")
+        url = raw_url.strip() if raw_url is not None else None
         if url:
             return cls(
                 url=url,
@@ -48,7 +49,7 @@ class DatabaseConfig:
         database = _required_env(env, f"{prefix}NAME")
         username = env.get(f"{prefix}USERNAME")
         password = env.get(f"{prefix}PASS")
-        port = env.get(f"{prefix}PORT")
+        port = _parse_optional_port(env.get(f"{prefix}PORT"), name=f"{prefix}PORT")
         charset = env.get(f"{prefix}CHARSET")
 
         driver_part = f"+{driver}" if driver else ""
@@ -77,7 +78,7 @@ class PoolConfig:
 
     def __post_init__(self) -> None:
         _require_non_negative_int("pool_size", self.pool_size)
-        if not isinstance(self.max_overflow, int):
+        if not isinstance(self.max_overflow, int) or isinstance(self.max_overflow, bool):
             raise MLPConfigurationError("max_overflow must be an int")
         _require_positive_number("pool_timeout_seconds", self.pool_timeout_seconds)
 
@@ -126,18 +127,30 @@ def _parse_optional_int(value: str | None) -> int | None:
         raise MLPConfigurationError(f"invalid integer environment value: {value!r}") from exc
 
 
+def _parse_optional_port(value: str | None, *, name: str) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise MLPConfigurationError(f"invalid {name}: {value!r}") from exc
+    if parsed <= 0:
+        raise MLPConfigurationError(f"invalid {name}: must be a positive integer")
+    return parsed
+
+
 def _require_bool(name: str, value: bool) -> None:
     if not isinstance(value, bool):
         raise MLPConfigurationError(f"{name} must be a bool")
 
 
 def _require_non_negative_int(name: str, value: int) -> None:
-    if not isinstance(value, int) or value < 0:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
         raise MLPConfigurationError(f"{name} must be a non-negative int")
 
 
 def _require_positive_int(name: str, value: int) -> None:
-    if not isinstance(value, int) or value <= 0:
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
         raise MLPConfigurationError(f"{name} must be a positive int")
 
 

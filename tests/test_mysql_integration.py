@@ -62,7 +62,7 @@ def test_mysql_logging_and_dedicated_connection() -> None:
     logger = MemoryLogger()
     db = build_db(
         logger=logger,
-        logging_config=LoggingConfig(slow_query_threshold_ms=0.0001, log_pool_events=True, log_successful_queries=True, log_parameters=True),
+        logging_config=LoggingConfig(slow_query_threshold_ms=0.0001, log_pool_events=True),
     )
 
     normal = db.connect()
@@ -76,10 +76,20 @@ def test_mysql_logging_and_dedicated_connection() -> None:
         normal.close()
 
     db.fetch_one("SELECT 1 AS ok")
-    db.fetch_one(text("SELECT :value AS value"), {"value": "abc"})
 
     assert any(record["event"] == "db_pool_checkout" for record in logger.records)
     assert any(record["event"] == "db_slow_query" for record in logger.records)
+
+
+def test_mysql_successful_query_and_parameters_log_when_enabled() -> None:
+    logger = MemoryLogger()
+    db = build_db(
+        logger=logger,
+        logging_config=LoggingConfig(slow_query_threshold_ms=None, log_successful_queries=True, log_parameters=True),
+    )
+
+    db.fetch_one(text("SELECT :value AS value"), {"value": "abc"})
+
     assert any(record["event"] == "db_query" for record in logger.records)
     query_record = next(record for record in logger.records if record["event"] == "db_query" and "parameters" in record["context"])
     assert query_record["context"]["parameters"] in (["abc"], {"value": "abc"})

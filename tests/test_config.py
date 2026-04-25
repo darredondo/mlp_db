@@ -95,6 +95,11 @@ def test_database_config_from_env_validates_port() -> None:
 
 
 def test_pool_and_logging_config_validation() -> None:
+    defaults = LoggingConfig()
+
+    assert defaults.log_pool_events is False
+    assert defaults.log_transaction_events is False
+
     with pytest.raises(MLPConfigurationError):
         PoolConfig(pool_size=-1)
     with pytest.raises(MLPConfigurationError):
@@ -108,4 +113,26 @@ def test_pool_and_logging_config_validation() -> None:
     with pytest.raises(MLPConfigurationError):
         LoggingConfig(log_parameters="yes")  # type: ignore[arg-type]
     with pytest.raises(MLPConfigurationError):
+        LoggingConfig(log_transaction_events="yes")  # type: ignore[arg-type]
+    with pytest.raises(MLPConfigurationError):
         LoggingConfig(max_statement_length=True)  # type: ignore[arg-type]
+
+
+def test_logging_config_from_env_reads_explicit_verbose_flags() -> None:
+    config = LoggingConfig.from_env(
+        environ={
+            "MLP_DB_LOG_SUCCESSFUL_QUERIES": "1",
+            "MLP_DB_LOG_POOL_EVENTS": "1",
+            "MLP_DB_LOG_TRANSACTION_EVENTS": "1",
+            "MLP_DB_LOG_PARAMETERS": "1",
+            "MLP_DB_LOG_SLOW_QUERY_THRESHOLD_MS": "25.5",
+            "MLP_DB_LOG_MAX_STATEMENT_LENGTH": "300",
+        }
+    )
+
+    assert config.log_successful_queries is True
+    assert config.log_pool_events is True
+    assert config.log_transaction_events is True
+    assert config.log_parameters is True
+    assert config.slow_query_threshold_ms == 25.5
+    assert config.max_statement_length == 300

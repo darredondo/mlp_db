@@ -51,7 +51,7 @@ Core dependency:
 ```toml
 dependencies = [
   "SQLAlchemy>=2.0,<3.0",
-  "mlp-logging @ git+https://github.com/darredondo/mlp_logger.git@v0.2.0",
+  "mlp-logging @ git+https://github.com/darredondo/mlp_logger.git@v0.2.2",
 ]
 ```
 
@@ -178,7 +178,18 @@ db_transaction_commit
 db_transaction_rollback
 ```
 
-Successful queries are not logged by default. Slow queries are logged when `duration_ms >= slow_query_threshold_ms`. Query errors are always logged when a logger exists. Pool events can be disabled with `LoggingConfig(log_pool_events=False)`.
+Successful queries are not logged by default. Slow queries are logged when `duration_ms >= slow_query_threshold_ms`. Query errors are always logged when a logger exists.
+
+Pool events and transaction events are disabled by default. Enable them explicitly when you need a very verbose diagnostic run:
+
+```python
+from mlp.db import LoggingConfig
+
+logging_config = LoggingConfig(
+    log_pool_events=True,
+    log_transaction_events=True,
+)
+```
 
 Parameters are not logged by default. If `log_parameters=True`, values are sanitized and truncated before being added to the logging context. Statements are truncated using `max_statement_length`.
 

@@ -35,7 +35,7 @@ class MLPDatabase:
             raise TypeError("logging_config must be LoggingConfig or None.")
         self._engine = engine
         self._logger = logger or build_default_logger()
-        self._logging_config = logging_config or LoggingConfig.from_env()
+        self._logging_config = logging_config or LoggingConfig()
         self._dedicated_engine: Engine | None = None
         instrument_engine(self._engine, logger=self._logger, config=self._logging_config)
 

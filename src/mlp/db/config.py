@@ -87,13 +87,15 @@ class PoolConfig:
 class LoggingConfig:
     log_successful_queries: bool = False
     slow_query_threshold_ms: float | None = 500.0
-    log_pool_events: bool = True
+    log_pool_events: bool = False
+    log_transaction_events: bool = False
     log_parameters: bool = False
     max_statement_length: int = 2000
 
     def __post_init__(self) -> None:
         _require_bool("log_successful_queries", self.log_successful_queries)
         _require_bool("log_pool_events", self.log_pool_events)
+        _require_bool("log_transaction_events", self.log_transaction_events)
         _require_bool("log_parameters", self.log_parameters)
         _require_positive_int("max_statement_length", self.max_statement_length)
         if self.slow_query_threshold_ms is not None:
@@ -105,7 +107,8 @@ class LoggingConfig:
         return cls(
             log_successful_queries=_parse_bool(env.get(f"{prefix}SUCCESSFUL_QUERIES"), default=False),
             slow_query_threshold_ms=_parse_optional_float(env.get(f"{prefix}SLOW_QUERY_THRESHOLD_MS"), default=500.0),
-            log_pool_events=_parse_bool(env.get(f"{prefix}POOL_EVENTS"), default=True),
+            log_pool_events=_parse_bool(env.get(f"{prefix}POOL_EVENTS"), default=False),
+            log_transaction_events=_parse_bool(env.get(f"{prefix}TRANSACTION_EVENTS"), default=False),
             log_parameters=_parse_bool(env.get(f"{prefix}PARAMETERS"), default=False),
             max_statement_length=_parse_optional_int(env.get(f"{prefix}MAX_STATEMENT_LENGTH")) or 2000,
         )

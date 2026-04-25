@@ -51,7 +51,7 @@ Core dependency:
 ```toml
 dependencies = [
   "SQLAlchemy>=2.0,<3.0",
-  "mlp-logging @ git+https://github.com/darredondo/mlp_logger.git@v0.2.2",
+  "mlp-logging @ git+https://github.com/darredondo/mlp_logger.git@2910132",
 ]
 ```
 
